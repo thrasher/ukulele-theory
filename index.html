@@ -1,0 +1,355 @@
+<!doctype html>
+<html>
+<head>
+  <title>Ukulele Chords</title>
+  <meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1">
+
+  <style type="text/css">
+  .chord {
+  	max-width: 110px;
+  	text-align: center;
+  }
+  .chordname {
+  	border-radius: 5px;
+  	min-width: 110px;
+  	display: inline-block;
+  	font-family: Arial;
+  	color: #FFFFFF;
+  	background-color: #000000;
+  }
+  .section {
+  	display: grid;
+  	grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; /* fraction*/
+  }
+  </style>
+
+	<script src="js/support/jquery.min.js"></script>
+  <script src="js/support/raphael-min.js"></script>
+	<script src="js/fretboard.js"></script>
+  <script src="js/chord.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="http://frankmodica.net/static/fretboarddemo/styles.css">
+	<!-- <link rel="stylesheet" type="text/css" href="demo-styles.css"> -->
+
+<script type="text/javascript">
+var Semitones = {
+	sharps:    ['A', 'A#', 'B',  'C',  'C#', 'D', 'D#', 'E',  'F',  'F#', 'G', 'G#'],
+	sharpsalt: ['A', 'A#', 'B',  'B#', 'C#', 'D', 'D#', 'E',  'E#', 'F#', 'G', 'G#'],
+	flats:     ['A', 'Bb', 'B',  'C',  'Db', 'D', 'Eb', 'E',  'F',  'Gb', 'G', 'Ab'],
+	flatsalt:  ['A', 'Bb', 'Cb', 'C',  'Db', 'D', 'Eb', 'Fb', 'F',  'Gb', 'G', 'Ab']
+};
+
+var Accidental = {
+flat: { unicode: '\u266D', simple: 'b', semitone: -1 },
+natural: { unicode: '\u266E', simple: '', semitone: 0 },
+sharp: { unicode: '\u266F', simple: '#', semitone: 1 }
+};
+// console.log(Accidental);
+//High_G: "G4 C4 E4 A4", // modern American ukulele, G4 = 391.995 Hz
+var Tunings = {
+    High_G: "G4 C4 E4 A4", // modern American ukulele, G4 = 391.995 Hz
+    Low_G: "G3 C4 E4 A4",
+    Hawaiian: "A4 D4 F#4 B4", // historical Hawaiian soprano-esque
+    Baritone: "D3 G3 B3 E4", // matches top-4 guitar strings
+    note_octaves: function(scale) { return Tunings[scale].split(" "); },
+    notes: function(scale) { return Tunings[scale].split(" ").map(function(e) {
+  		return e.substring(0, e.length - 1);
+		})},
+    fretboard: function(scale) { return Tunings[scale].split(" ").map(function(e) {
+  		return { 'letter': e.substring(0, 1), 'octave': parseInt(e.substring(1, 2)) };
+		})}
+};
+console.log("this is high g: "+Tunings.notes('High_G'));
+
+function Chord(root, scale) {
+  this.root = root;
+  this.scale = scale;
+}
+
+
+// getFret('G', 'C')
+function getFret(string, note) {
+	var steps = Semitones.flats;
+	var step = steps.findIndex(function(element) {
+		return element == string;
+	});
+	var offset = steps.findIndex(function(element) {
+		return element == note;
+	});
+	return offset - step < 0 ? steps.length + (offset - step) : offset - step;
+}
+console.log("G string, C note is fret: " + getFret('G', 'C'));
+
+var api = null;
+function loadFretboard() {
+	$(".my-fretboard-js").fretboard({
+	    // Configuration properties
+	    numFrets: 8,
+	    tuning: Tunings.fretboard("High_G").reverse(),
+	    notesClickedCallback: function() {
+	    	// when a note is pressed, this callback is called
+	    	console.log("notesClickedCallback");
+	    	var notes = api.getClickedNotes();
+	    	console.log(notes);
+	    }
+	});
+	api = $(".my-fretboard-js").data('api');
+	// api.setNumFrets(8);
+	// api.setNumStrings(4);
+	// api.setTuning(Tunings.fretboard("High_G").reverse());
+	// console.log(api.getIntervals());
+	api.setRoot("C#/Db");
+}
+
+var buttonNotes = function() {
+	api.clearClickedNotes();
+	console.log("tuning:");console.log(api.getTuning()[0]);
+	console.log("intervals: " + api.getIntervals());
+	console.log("noteCircles: " + api.getNoteCircles());
+	console.log(api.getAllNotes());
+	console.log(JSON.stringify(api.getClickedNotes()));
+	//api.clearClickedNotes();
+	api.setClickedNotes([{
+			"string": api.getTuning()[0],
+			"notes": [
+				{"fret":3}//, {"fret":1}, {"fret":2}
+			]
+		}]);
+}
+
+//
+var Scale = function(key, name = "Major") {
+	// pattern = [];
+	set = Semitones.flats;
+	if (['C', 'G', 'D', 'A', 'E', 'B', 'A#', 'B#', 'C#', 'D#', 'E#', 'F#', 'G#'].indexOf(key) >= 0) {
+		set = Semitones.sharps;
+	} else if (key == 'B#' || key == 'F#') {
+		set = Semitones.sharpsalt;
+	} else if (key == 'Cb' || key == 'Fb') {
+		set = Semitones.flatsalt;
+	}
+	var toneOffset = set.indexOf(key);
+	// console.log(toneOffset);
+	var tones = set.slice(toneOffset, 12).concat(set.slice(0, toneOffset));
+	// console.log(tones);
+
+	//console.log(semitoneSpelling[name]);
+	var spelling = semitoneSpelling[name];//[0,2,4,5,7,9,11];
+	var scale = new Array();
+	for(i=0; i<spelling.length; i++) {
+		scale[i] = tones[spelling[i]];
+	}
+	//console.log("key of " + key + " scale: " + scale);
+	return scale;
+};
+
+
+var cnt = 0;
+function allScales() {
+	Semitones.flats.forEach(function(note) {
+		cnt++;
+	  console.log(note + " Major : " + Scale(note, "Major"));
+	  console.log(note + " Minor : " + Scale(note, "Minor"));
+	});
+}
+
+var semitoneSpelling = {};
+var scales = {};
+
+var xhrLoadScales = new XMLHttpRequest();
+xhrLoadScales.onreadystatechange = function() {
+  if (this.readyState == 4 && this.status == 200) {
+    var json = JSON.parse(this.responseText);
+    scales = json;
+    var map = {1:0, 2:2, 3:4, 4:5, 5:7, 6:9, 7:11}; // tone: semitone increment
+  	for (var scale in json) {
+			// skip loop if the property is from prototype
+			if (!json.hasOwnProperty(scale)) continue;
+
+			var spelling = json[scale].spelling.split(" ");
+			var semitones = new Array(spelling.length);
+			for (i in spelling) {
+				var num = parseInt(spelling[i].match(/\d+/g)); // number
+				var acc = spelling[i].match(/\D+/g); // accidental, or null if none
+
+				var semi = map[num > 8 ? num % 8 + 1 : num];
+				//console.log(semi);
+				if (acc == '#') {
+					semi++;
+				}
+				if (acc == 'b') {
+					semi--;
+				}
+				semitones[i] = semi % 12;
+			}
+			// console.log("semsemitones : " + semitones);
+			semitoneSpelling[scale] = semitones;
+		}
+		console.log(semitoneSpelling);
+		//allScales();
+		buildChords();
+  }
+};
+xhrLoadScales.open("GET", "scales.json", true);
+xhrLoadScales.send();
+
+function buildChords() {
+  var container = $("#container");
+	Semitones.flats.forEach(function(note) {
+		var section_struct = {"section":scale,"description":"These chords are played in open position, and generally include open strings."};
+		var section = createSectionElement(section_struct);
+		for (var scale in scales) {
+			if (!scales.hasOwnProperty(scale)) continue;
+			console.log(scales[scale]);
+			var tuning = Tunings.notes('High_G');
+			var chord = getFingering(note, scale, tuning);
+			var struct = {
+				"name": note + " " + scales[scale].abbr,
+				// "name": note + " " + scale,
+				"chord": chord
+			};
+			// console.log(tuning);
+			var notes = [
+				getNote(tuning[0], chord[0][1]),
+				getNote(tuning[1], chord[1][1]),
+				getNote(tuning[2], chord[2][1]),
+				getNote(tuning[3], chord[3][1])
+			];
+			section.append(createChordElement(struct, notes));
+		}
+		container.append(section);
+	});
+}
+
+// given a letter note, calculate the letter note the given number of semitones above it
+function getNote(tonic, semitones) {
+	var string = getSemitoneIndex(tonic);
+	return Semitones.sharps[(string + semitones) % 12];
+}
+
+function getFingering(tonic, scale, tuning) {
+	// tonic = 'C';
+	// scale = 'Major';
+	// tuning = Tunings.notes('High_G');
+	// console.log(tuning);
+	var tuningIdx = new Array(tuning.length);
+	for (var i=0; i<tuning.length; i++) {
+		tuningIdx[i] = getSemitoneIndex(tuning[i]);
+	}
+	// console.log(tuningIdx);
+
+	var scaleIdx = new Array();
+	var idx = 0;
+	Scale(tonic, scale).forEach(function(note){
+		scaleIdx[idx++] = getSemitoneIndex(note);
+	});
+	// console.log(scaleIdx);
+
+	// for each string, find the scale that's the shortest distance above it
+	var fretIdx = new Array(tuning.length);
+	for (var i = 0; i < tuningIdx.length; i++) {
+		var minDist = 11;
+		for (var j = 0; j < scaleIdx.length; j++) {
+			var dist = 0;
+			// console.log("tuning: " + tuningIdx[i] + " scaleIdx: " + scaleIdx[j]);
+			dist = scaleIdx[j] - tuningIdx[i];
+			// console.log(dist) ;
+			dist = dist < 0 ? dist + 12 : dist;
+			// console.log(tuningIdx[i] - scaleIdx[j]);
+			// console.log(dist);
+			minDist = minDist < dist ? minDist : dist;
+		}
+		// console.log("min dist: " + minDist);
+		fretIdx[i] = minDist;
+	}
+	// console.log(fretIdx);
+	// return fretIdx;
+
+	// build chord array for chord.js rendering like [[1,3],[2,0],[3,0],[4,0]]
+	var chord = [];
+	for(var i = 0; i < tuningIdx.length; i++) {
+		chord[i] = [4 - i, fretIdx[i]]; // note reverse ordering from 4 for chord.js
+	}
+	// console.log(JSON.stringify(chord));
+	return chord;
+}
+
+// given a note (ex: 'C#'), find it's Semitone index from zero
+function getSemitoneIndex(note) {
+	// console.log(note);
+	for (var semitone in Semitones) {
+		var tone = Semitones[semitone].indexOf(note);
+		if (tone >= 0) {
+			// console.log(note + " is index " + tone);
+			return tone;
+		}
+	}
+	return -1;
+}
+
+function createSectionElement(section_struct) {
+  var section = $('<div>').addClass('section');
+  return section;
+}
+
+var clicked = function(evt){
+	console.log(evt);
+        var e = evt.target;
+        var dim = e.getBoundingClientRect();
+        var x = evt.clientX - dim.left;
+        var y = evt.clientY - dim.top;
+        console.log("x: "+x+" y:"+y);
+}
+// var click = function(evt) { alert('blah' + evt); }
+
+function createChordElement(chord_struct, notes) {
+  var chordbox = $('<div>').addClass('chord');
+  var chordcanvas = $('<div>');
+  var chordname = $('<div>').addClass('chordname');
+
+  chordbox.append(chordname);
+  chordbox.append(chordcanvas);
+  chordname.append(chord_struct.name);
+
+  var paper = Raphael(chordcanvas[0], 110, 150);
+  var stringCount = 4;
+  var chord = new ChordBox(paper, 5, 10, 100, 116, stringCount);
+  chord.setNumFrets(5);
+  // var notes = ['G', 'C', 'E', 'A'];
+  chord.setChord(
+      chord_struct.chord,
+      chord_struct.position,
+      chord_struct.bars,
+      chord_struct.position_text,
+      notes
+      );
+  chord.draw();
+
+  //paper.canvas.onclick = clicked;
+  // console.log(paper.canvas);
+  // console.log(chordcanvas[0].children[0]);
+  //chordcanvas[0].children[0].onclick = clicked;
+
+  return chordbox;
+}
+
+window.onload = function() {
+	// loadFretboard();
+}
+
+</script>
+</head>
+<body>
+	<h1>Ukulele</h1>
+	<div>Chords here</div>
+	<a href="https://github.com/fmodica/fretboard">Fretboard</a>
+	<a href="http://claudio-uke.blogspot.com/p/useful-music-tools.html">Ukulele Music Theory</a>
+	<a href="https://liveukulele.com/chords/constructing-ukulele-chords/">making chords</a>
+	<a href="https://ukuchords.com/files/UkuChords_Complete180ChordChartsPoster_Standard.png">chord chart</a>
+	<div class="my-fretboard-js"></div>
+	&#x266D; &#x266E; &#x266F;
+
+	<div id="container"></div>
+</body>
+</html>
