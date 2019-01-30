@@ -124,7 +124,7 @@ var Scale = function(key, name = "Major") {
 	set = Semitones.flats;
 	if (['C', 'G', 'D', 'A', 'E', 'B', 'A#', 'B#', 'C#', 'D#', 'E#', 'F#', 'G#'].indexOf(key) >= 0) {
 		set = Semitones.sharps;
-	} else if (key == 'B#' || key == 'F#') {
+	} else if (key == 'B#' || key == 'E#') {
 		set = Semitones.sharpsalt;
 	} else if (key == 'Cb' || key == 'Fb') {
 		set = Semitones.flatsalt;
