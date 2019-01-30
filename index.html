@@ -29,9 +29,6 @@
 	<script src="js/fretboard.js"></script>
   <script src="js/chord.js"></script>
 
-	<link rel="stylesheet" type="text/css" href="http://frankmodica.net/static/fretboarddemo/styles.css">
-	<!-- <link rel="stylesheet" type="text/css" href="demo-styles.css"> -->
-
 <script type="text/javascript">
 var Semitones = {
 	sharps:    ['A', 'A#', 'B',  'C',  'C#', 'D', 'D#', 'E',  'F',  'F#', 'G', 'G#'],
@@ -40,13 +37,14 @@ var Semitones = {
 	flatsalt:  ['A', 'Bb', 'Cb', 'C',  'Db', 'D', 'Eb', 'Fb', 'F',  'Gb', 'G', 'Ab']
 };
 
+// console.log(Accidental);
 var Accidental = {
 flat: { unicode: '\u266D', simple: 'b', semitone: -1 },
 natural: { unicode: '\u266E', simple: '', semitone: 0 },
 sharp: { unicode: '\u266F', simple: '#', semitone: 1 }
 };
-// console.log(Accidental);
-//High_G: "G4 C4 E4 A4", // modern American ukulele, G4 = 391.995 Hz
+
+// console.log("this is high g: "+Tunings.notes('High_G'));
 var Tunings = {
     High_G: "G4 C4 E4 A4", // modern American ukulele, G4 = 391.995 Hz
     Low_G: "G3 C4 E4 A4",
@@ -60,15 +58,13 @@ var Tunings = {
   		return { 'letter': e.substring(0, 1), 'octave': parseInt(e.substring(1, 2)) };
 		})}
 };
-console.log("this is high g: "+Tunings.notes('High_G'));
 
 function Chord(root, scale) {
   this.root = root;
   this.scale = scale;
 }
 
-
-// getFret('G', 'C')
+// console.log("G string, C note is fret number: " + getFret('G', 'C'));
 function getFret(string, note) {
 	var steps = Semitones.flats;
 	var step = steps.findIndex(function(element) {
@@ -79,44 +75,8 @@ function getFret(string, note) {
 	});
 	return offset - step < 0 ? steps.length + (offset - step) : offset - step;
 }
-console.log("G string, C note is fret: " + getFret('G', 'C'));
 
-var api = null;
-function loadFretboard() {
-	$(".my-fretboard-js").fretboard({
-	    // Configuration properties
-	    numFrets: 8,
-	    tuning: Tunings.fretboard("High_G").reverse(),
-	    notesClickedCallback: function() {
-	    	// when a note is pressed, this callback is called
-	    	console.log("notesClickedCallback");
-	    	var notes = api.getClickedNotes();
-	    	console.log(notes);
-	    }
-	});
-	api = $(".my-fretboard-js").data('api');
-	// api.setNumFrets(8);
-	// api.setNumStrings(4);
-	// api.setTuning(Tunings.fretboard("High_G").reverse());
-	// console.log(api.getIntervals());
-	api.setRoot("C#/Db");
-}
 
-var buttonNotes = function() {
-	api.clearClickedNotes();
-	console.log("tuning:");console.log(api.getTuning()[0]);
-	console.log("intervals: " + api.getIntervals());
-	console.log("noteCircles: " + api.getNoteCircles());
-	console.log(api.getAllNotes());
-	console.log(JSON.stringify(api.getClickedNotes()));
-	//api.clearClickedNotes();
-	api.setClickedNotes([{
-			"string": api.getTuning()[0],
-			"notes": [
-				{"fret":3}//, {"fret":1}, {"fret":2}
-			]
-		}]);
-}
 
 //
 var Scale = function(key, name = "Major") {
@@ -341,15 +301,16 @@ window.onload = function() {
 </script>
 </head>
 <body>
-	<h1>Ukulele</h1>
-	<div>Chords here</div>
-	<a href="https://github.com/fmodica/fretboard">Fretboard</a>
-	<a href="http://claudio-uke.blogspot.com/p/useful-music-tools.html">Ukulele Music Theory</a>
-	<a href="https://liveukulele.com/chords/constructing-ukulele-chords/">making chords</a>
-	<a href="https://ukuchords.com/files/UkuChords_Complete180ChordChartsPoster_Standard.png">chord chart</a>
-	<div class="my-fretboard-js"></div>
-	&#x266D; &#x266E; &#x266F;
+	<h1>Ukulele Chords</h1>
 
 	<div id="container"></div>
+	<div>
+		<a href="https://github.com/fmodica/fretboard">Fretboard</a>
+		<a href="http://claudio-uke.blogspot.com/p/useful-music-tools.html">Ukulele Music Theory</a>
+		<a href="https://liveukulele.com/chords/constructing-ukulele-chords/">making chords</a>
+		<a href="https://ukuchords.com/files/UkuChords_Complete180ChordChartsPoster_Standard.png">chord chart</a>
+		<div class="my-fretboard-js"></div>
+		&#x266D; &#x266E; &#x266F;
+	</div>
 </body>
 </html>

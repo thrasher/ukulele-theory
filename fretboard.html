@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <title>Ukulele Fretboard</title>
+		<link rel="stylesheet" type="text/css" href="http://frankmodica.net/static/fretboarddemo/styles.css">
+    <style type="text/css">
+    .chord {
+    	max-width: 130;
+    	text-align: center;
+    }
+    .chordname {
+    	display: inline-block;
+    	font-family: Arial;
+    }
+    </style>
+
+	<script src="js/support/jquery.min.js"></script>
+	<script src="js/fretboard.js"></script>
+
+<script>
+var Tunings = {
+    High_G: "G4 C4 E4 A4", // modern American ukulele, G4 = 391.995 Hz
+    Low_G: "G3 C4 E4 A4",
+    Hawaiian: "A4 D4 F#4 B4", // historical Hawaiian soprano-esque
+    Baritone: "D3 G3 B3 E4", // matches top-4 guitar strings
+    note_octaves: function(scale) { return Tunings[scale].split(" "); },
+    notes: function(scale) { return Tunings[scale].split(" ").map(function(e) {
+  		return e.substring(0, e.length - 1);
+		})},
+    fretboard: function(scale) { return Tunings[scale].split(" ").map(function(e) {
+  		return { 'letter': e.substring(0, 1), 'octave': parseInt(e.substring(1, 2)) };
+		})}
+};
+
+var api = null;
+function loadFretboard() {
+	$(".my-fretboard-js").fretboard({
+	    // Configuration properties
+	    numFrets: 8,
+	    tuning: Tunings.fretboard("High_G").reverse(),
+	    notesClickedCallback: function() {
+	    	// when a note is pressed, this callback is called
+	    	console.log("notesClickedCallback");
+	    	var notes = api.getClickedNotes();
+	    	console.log(notes);
+	    }
+	});
+	api = $(".my-fretboard-js").data('api');
+	// api.setNumFrets(8);
+	// api.setNumStrings(4);
+	// api.setTuning(Tunings.fretboard("High_G").reverse());
+	// console.log(api.getIntervals());
+	api.setRoot("C#/Db");
+}
+
+var buttonNotes = function() {
+	api.clearClickedNotes();
+	console.log("tuning:");console.log(api.getTuning()[0]);
+	console.log("intervals: " + api.getIntervals());
+	console.log("noteCircles: " + api.getNoteCircles());
+	console.log(api.getAllNotes());
+	console.log(JSON.stringify(api.getClickedNotes()));
+	//api.clearClickedNotes();
+	api.setClickedNotes([{
+			"string": api.getTuning()[0],
+			"notes": [
+				{"fret":3}//, {"fret":1}, {"fret":2}
+			]
+		}]);
+}
+
+window.onload = function() {
+	loadFretboard();
+}
+
+</script>
+</head>
+<body>
+
+  <div class="my-fretboard-js"></div>
+
+</body>
+</html>
